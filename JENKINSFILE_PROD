@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    stages {
+        stage('Get Code') {
+            steps {
+                cleanWs()
+            	git branch: 'master', url: 'https://github.com/gauladell/todo-list-aws.git'
+            	sh 'mkdir deploy_config'
+            	dir("${WORKSPACE}/deploy_config"){
+                 	git branch: 'production', url: 'https://github.com/gauladell/todo-list-aws-config'
+            	}
+            }
+        }
+        
+        stage('SAM Build'){
+            steps{
+                sh'''
+                sam validate --region us-east-1
+                sam build
+                '''
+            }
+        }
+        stage('SAM Deploy'){
+            steps{
+                sh'''
+                    sam deploy --force-upload --no-confirm-changeset --no-fail-on-empty-changeset --stack-name todo-list-aws-prod --config-env production  --resolve-s3
+                '''
+            }
+        }
+         stage('Integration Test after deploy'){
+            steps{
+                script {
+                    def BASE_URL = sh( script: "aws cloudformation describe-stacks --stack-name todo-list-aws-prod --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text",
+                        returnStdout: true)
+                    def pyenv_vars = "BASE_URL="+BASE_URL;
+                    writeFile(file: '.env', text:pyenv_vars);
+                    sh 'export PYTHONPATH=${WORKSPACE}'
+                    sh '''
+                     pytest --junitxml=result-rest.xml ${WORKSPACE}/test/integration/todoApiTestProd.py
+                    '''
+                    junit 'result*.xml'
+                }
+                   
+            }
+        }
+        
+    }
+}
