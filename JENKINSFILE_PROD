@@ -39,6 +39,7 @@ pipeline {
                      pytest --junitxml=result-rest.xml ${WORKSPACE}/test/integration/todoApiTestProd.py
                     '''
                     junit 'result*.xml'
+                    cleanWs()
                 }
                    
             }
