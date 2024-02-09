@@ -1,14 +1,26 @@
 pipeline {
     agent any
+    environment {
+        GIT_SSH_KEY = credentials('github')
+    }
     stages {
         stage('Get Code') {
             steps {
-            	git branch: 'develop', url: 'https://github.com/gauladell/todo-list-aws.git'
-            	sh 'mkdir deploy_config'
-            	dir("${WORKSPACE}/deploy_config"){
-            	    git branch: 'staging', url: 'https://github.com/gauladell/todo-list-aws-config'
-            	}
-            	
+                script {
+                    cleanWs();
+                 
+                    sh '''
+                     eval `ssh-agent -s`
+                     ssh-add ${GIT_SSH_KEY}
+                 
+                    '''
+                    git branch: 'develop', url: 'git@github.com:gauladell/todo-list-aws.git'
+                	sh 'mkdir deploy_config'
+                	dir("${WORKSPACE}/deploy_config"){
+                	    git branch: 'staging', url: 'https://github.com/gauladell/todo-list-aws-config'
+                	}
+                	
+                }
             }
         }
             
@@ -51,7 +63,7 @@ pipeline {
                 '''
             }
         }
-         stage('Integration Test after deploy'){
+        stage('Integration Test after deploy'){
             steps{
                 script {
                     def BASE_URL = sh( script: "aws cloudformation describe-stacks --stack-name todo-list-aws --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text",
@@ -63,9 +75,29 @@ pipeline {
                      pytest --junitxml=result-rest.xml ${WORKSPACE}/test/integration/todoApiTest.py
                     '''
                     junit 'result*.xml'
-                    cleanWs()
+                    
                 }
                    
+            }
+        }
+        stage('Promote to Master'){
+            steps{
+                script {
+         
+                    sh('git status')
+                    sh('git fetch')
+                    sh('git pull origin develop')
+                    def release_name = 'release_'+BUILD_ID
+                    writeFile(file: 'release', text:release_name)
+                    sh('git add .')
+                    sh('git commit -m "commit ${release_name}"')
+                    sh('git push origin develop')
+                    sh('git checkout master')
+                    sh('git pull origin master')
+                    sh('git merge develop')
+                    sh('git push origin master')
+                   cleanWs()
+                }
             }
         }
         
