@@ -81,7 +81,7 @@ pipeline {
         }
         stage('SAM Deploy production'){
             when {
-                branch 'develop' 
+                branch 'master' 
             }
             steps{
                //sam deploy -t  template.yaml  --config-file ${WORKSPACE}/deploy_config/samconfig.toml  --force-upload --no-confirm-changeset --no-fail-on-empty-changeset --stack-name todo-list-aws --config-env staging --role-arn vocalb --profile default --resolve-s3  
