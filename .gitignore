@@ -10,3 +10,4 @@ bandit.out
 deploy_config/
 flake8.out
 result-rest.xml
+JENKINSFILE_CICD
