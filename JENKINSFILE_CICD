@@ -135,7 +135,7 @@ pipeline {
             }
             steps{
                 script {
-         
+                    sh('git checkout develop')
                     sh('git status')
                     sh('git fetch')
                     sh('git pull origin develop')
