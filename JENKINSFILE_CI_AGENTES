@@ -81,8 +81,8 @@ pipeline {
                     def BASE_URL = sh( script: "aws cloudformation describe-stacks --stack-name todo-list-aws --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text",
                         returnStdout: true)
                     def pyenv_vars = "BASE_URL="+BASE_URL;
-                    writeFile(file: '.env', text:pyenv_vars);
-                    stash(includes:'.env' name: 'envUrl')
+                    writeFile(file: '.env', text:pyenv_vars);                    
+                    stash includes: '**/.env', name: 'envUrl'
                 }
             }
         }
