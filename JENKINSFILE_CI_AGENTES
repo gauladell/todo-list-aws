@@ -109,6 +109,8 @@ pipeline {
                         whoami
                         hostname
                     '''
+                    sh('git remote set-url origin git@github.com:gauladell/todo-list-aws.git')
+                    sh('git checkout develop')
                     sh('git status')
                     sh('git fetch')
                     sh('git pull origin develop')
