@@ -82,7 +82,7 @@ pipeline {
                         returnStdout: true)
                     def pyenv_vars = "BASE_URL="+BASE_URL;
                     writeFile(file: '.env', text:pyenv_vars);
-                    stash(includes '.env' name: 'envUrl')
+                    stash(includes:'.env' name: 'envUrl')
                 }
             }
         }
